@@ -253,6 +253,23 @@ inline void wrMSR(u32 msr, u64 value)
   asm volatile( "wrmsr" : : "a"(lo), "d"(hi), "c"(msr) );
 }
 
+inline bool is_intel(void) {
+  uint32_t eax = 0, ebx = 0, ecx = 0, edx = 0;
+  char vendor[13];
+  __asm__ __volatile("cpuid"
+                     : "=a"(eax), "=b"(ebx), "=c"(ecx), "=d"(edx)
+                     : "a"(0));
+  snprintf(vendor, sizeof(vendor), "%c%c%c%c%c%c%c%c%c%c%c%c", ebx & 0xff,
+           (ebx >> 8) & 0xff, (ebx >> 16) & 0xff, (ebx >> 24) & 0xff,
+           edx & 0xff, (edx >> 8) & 0xff, (edx >> 16) & 0xff,
+           (edx >> 24) & 0xff, ecx & 0xff, (ecx >> 8) & 0xff,
+           (ecx >> 16) & 0xff, (ecx >> 24) & 0xff);
+  if (strncmp(vendor, "GenuineIntel", 12) == 0) {
+    return 1;
+  } else {
+    return 0;
+  }
+}
 
 /* NOTE: this is Intel x86-64 specific. It crashes on AMD */
 /* NOTE: the Intel values seem bogus */
@@ -305,13 +322,21 @@ printk(KERN_INFO "kutrace_ipc_mod rdMSR(0xC0010015) = %016llx\n", inst_ret_enabl
 	wrMSR(0xC0010015, inst_ret_enable);
 }
 
-/* choose later */
-inline u64 get_inst_retired(void) {return get_inst_retired_amd();}
+inline u64 get_inst_retired(void) {
+  if (is_intel()) {
+    return get_inst_retired_intel();
+  } else {
+    return get_inst_retired_amd();
+  }
+}
 
-/* choose later */
-inline void setup_get_inst_retired(void) {setup_get_inst_retired_amd();}
-
-
+inline void setup_get_inst_retired(void) {
+  if (is_intel()) {
+    return setup_get_inst_retired_intel();
+  } else {
+    return setup_get_inst_retired_amd();
+  }
+}
 
 #else
 	BUILD_BUG_ON_MSG(1, "Define get_inst_retired for your architecture");
