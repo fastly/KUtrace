@@ -255,16 +255,13 @@ inline void wrMSR(u32 msr, u64 value)
 
 inline bool is_intel(void) {
   uint32_t eax = 0, ebx = 0, ecx = 0, edx = 0;
-  char vendor[13];
   __asm__ __volatile("cpuid"
                      : "=a"(eax), "=b"(ebx), "=c"(ecx), "=d"(edx)
                      : "a"(0));
-  snprintf(vendor, sizeof(vendor), "%c%c%c%c%c%c%c%c%c%c%c%c", ebx & 0xff,
-           (ebx >> 8) & 0xff, (ebx >> 16) & 0xff, (ebx >> 24) & 0xff,
-           edx & 0xff, (edx >> 8) & 0xff, (edx >> 16) & 0xff,
-           (edx >> 24) & 0xff, ecx & 0xff, (ecx >> 8) & 0xff,
-           (ecx >> 16) & 0xff, (ecx >> 24) & 0xff);
-  if (strncmp(vendor, "GenuineIntel", 12) == 0) {
+  /* Match on bytes for string GenuineIntel */
+  if (ebx == 0x756e6547 &&
+      ecx == 0x6c65746e &&
+      edx == 0x49656e69) {
     return 1;
   } else {
     return 0;

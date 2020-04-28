@@ -739,18 +739,9 @@ void kutrace::DoEvent(u64 eventnum, u64 arg) {::DoEvent(eventnum, arg);}
 void kutrace::DoFlush() {::DoFlush();}
 void kutrace::DoInit(const char* process_name) {::DoInit(process_name);}
 void kutrace::DoMark(u64 n, u64 arg) {::DoMark(n, arg);}
-bool kutrace::DoTest() {
-  bool retval = ::DoTest();
-  return retval;
-}
-bool kutrace::DoOff() {
-  bool retval = ::DoOff();
-  return retval;
-}
-bool kutrace::DoOn() {
-  bool retval = ::DoOn();
-  return retval;
-}
+bool kutrace::DoTest() { return ::DoTest(); }
+bool kutrace::DoOff() { return ::DoOff(); }
+bool kutrace::DoOn() { return ::DoOn(); }
 void kutrace::DoQuit() {::DoQuit();}
 void kutrace::DoReset(u64 doing_ipc){::DoReset(doing_ipc);}
 void kutrace::DoStat(u64 control_flags) {::DoStat(control_flags);}
