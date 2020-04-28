@@ -253,6 +253,20 @@ inline void wrMSR(u32 msr, u64 value)
   asm volatile( "wrmsr" : : "a"(lo), "d"(hi), "c"(msr) );
 }
 
+inline bool is_intel(void) {
+  uint32_t eax = 0, ebx = 0, ecx = 0, edx = 0;
+  __asm__ __volatile("cpuid"
+                     : "=a"(eax), "=b"(ebx), "=c"(ecx), "=d"(edx)
+                     : "a"(0));
+  /* Match on bytes for string GenuineIntel */
+  if (ebx == 0x756e6547 &&
+      ecx == 0x6c65746e &&
+      edx == 0x49656e69) {
+    return 1;
+  } else {
+    return 0;
+  }
+}
 
 /* NOTE: this is Intel x86-64 specific. It crashes on AMD */
 /* NOTE: the Intel values seem bogus */
@@ -305,13 +319,21 @@ printk(KERN_INFO "kutrace_ipc_mod rdMSR(0xC0010015) = %016llx\n", inst_ret_enabl
 	wrMSR(0xC0010015, inst_ret_enable);
 }
 
-/* choose later */
-inline u64 get_inst_retired(void) {return get_inst_retired_amd();}
+inline u64 get_inst_retired(void) {
+  if (is_intel()) {
+    return get_inst_retired_intel();
+  } else {
+    return get_inst_retired_amd();
+  }
+}
 
-/* choose later */
-inline void setup_get_inst_retired(void) {setup_get_inst_retired_amd();}
-
-
+inline void setup_get_inst_retired(void) {
+  if (is_intel()) {
+    return setup_get_inst_retired_intel();
+  } else {
+    return setup_get_inst_retired_amd();
+  }
+}
 
 #else
 	BUILD_BUG_ON_MSG(1, "Define get_inst_retired for your architecture");
